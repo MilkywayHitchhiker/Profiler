@@ -1,0 +1,5 @@
+l Name              l Average       l MinTime       l MaxTime       l TotalCaLL l
+�ѤѤѤѤѤѤѤѤѤѤѤѤѤѤѤѤѤѤѤѤѤѤѤѤѤѤѤѤѤѤѤѤѤѤѤѤѤѤѤѤ�
+l 1ms               l 1.5151     ms l 1.0465     ms l 2.7779     ms l      396  l
+l 10ms              l 10.2175    ms l 10.0197    ms l 12.5614    ms l      396  l
+l 100ms             l 98.5979    ms l 100.0307   ms l 103.6915   ms l      396  l

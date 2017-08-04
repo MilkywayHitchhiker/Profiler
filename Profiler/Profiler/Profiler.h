@@ -41,7 +41,7 @@ public:
 			profile_Array[cnt].CallCNT = 0;		//호출횟수 초기화
 		}
 		QueryPerformanceFrequency (&SecondFrequency);
-		MicroSecond = (double) SecondFrequency.QuadPart / 1000;
+		MicroSecond = (double) SecondFrequency.QuadPart / 1000000;
 	}
 	~ProfileStructher (void)
 	{
@@ -50,6 +50,7 @@ public:
 	bool Set_Profile (char *name, __int64 SetTime);	//종료안된 프로파일 일 경우 false 리턴
 	bool End_Profile (char *name, __int64 EndTime);	//없거나 시작되지 않은 프로파일 일경우 false 리턴.
 	void Print_Profile (void);		//저장된 프로파일들을 파일로 출력함.
+	void ClearProfile (void);		//모든 프로파일을 초기화 시켜버린다.
 };
 
 void Profile_Begin (char *name);

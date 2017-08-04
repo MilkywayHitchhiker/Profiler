@@ -154,7 +154,21 @@ void ProfileStructher::Print_Profile (void)
 	}
 	fclose (fp);
 }
-
+void ProfileStructher::ClearProfile (void)		//모든 프로파일을 초기화 시켜버린다.
+{
+	int cnt;
+	for ( cnt = 0; cnt < Max; cnt++ )
+	{
+		profile_Array[cnt].flag = false;
+		profile_Array[cnt].Name[0] = NULL;
+		profile_Array[cnt].TotalTime = 0;
+		profile_Array[cnt].Min_Time[0] = 0x7fffffffffffffff;		//최소 걸린 시간이므로 최대값으로 밀어준다.
+		profile_Array[cnt].Min_Time[1] = 0x7fffffffffffffff;
+		profile_Array[cnt].Max_Time[0] = 0;		//최대 걸린 시간이므로 최소값으로 밀어준다.
+		profile_Array[cnt].Max_Time[1] = 0;
+		profile_Array[cnt].CallCNT = 0;		//호출횟수 초기화
+	}
+}
 
 ProfileStructher Profile;
 
@@ -186,6 +200,10 @@ void Profile_Print (void)
 	if ( GetAsyncKeyState (0x50) & 0x8001 )
 	{
 		Profile.Print_Profile ();
+	}
+	if ( GetAsyncKeyState (0x4f) & 0x8001 )
+	{
+		Profile.ClearProfile ();
 	}
 	return;
 }

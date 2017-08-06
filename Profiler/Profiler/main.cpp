@@ -4,27 +4,70 @@
 #include "stdafx.h"
 #include "Profiler.h"
 #include <Windows.h>
+#include<process.h>
+
+unsigned int WINAPI WorkerThread (LPVOID lParam);
+bool flag = false;
 
 int main()
 {
+	HANDLE Thread[3];
+	for ( int Cnt = 0; Cnt < 3; Cnt++ )
+	{
+		Thread[Cnt] = ( HANDLE )_beginthreadex (NULL, 0, WorkerThread, NULL, true, NULL);
+	}
+	
+
 	while ( 1 )
 	{
-		PROFILE_BEGIN ("1ms");
-		Sleep (1);
-		PROFILE_END ("1ms");
+		PROFILE_KEYPROC;
 
-		PROFILE_BEGIN ("10ms");
-		Sleep (10);
-		PROFILE_END ("10ms");
+		//q
+		if ( GetAsyncKeyState (0x51) & 0x8001 )
+		{
+			flag = true;
 
-		PROFILE_BEGIN ("100ms");
-		Sleep (100);
-		PROFILE_END ("100ms");
+			WaitForMultipleObjects (3, Thread, TRUE, INFINITE);
+			break;
+		}
 
-		PROFILE_PRINT;
 
 	}
 
     return 0;
 }
 
+unsigned int WINAPI WorkerThread (LPVOID lParam)
+{
+	int Cnt=0;
+	while ( 1 )
+	{
+
+		PROFILE_BEGIN (L"One");
+		for ( int Num = 0; Num < 100; Num++ )
+		{
+			Cnt += Num;
+		}
+		PROFILE_END (L"One");
+
+		PROFILE_BEGIN (L"Two");
+		for ( int Num = 0; Num < 1000; Num++ )
+		{
+			Cnt += Num;
+		}
+		PROFILE_END (L"Two");
+
+		PROFILE_BEGIN (L"Three");
+		for ( int Num = 0; Num < 10000; Num++ )
+		{
+			Cnt += Num;
+		}
+		PROFILE_END (L"Three");
+
+
+		if ( flag == true )
+		{
+			return 0;
+		}
+	}
+}

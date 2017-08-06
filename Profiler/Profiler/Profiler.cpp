@@ -1,24 +1,47 @@
-#include"stdafx.h"
+ï»¿#include"stdafx.h"
 #include"Profiler.h"
 
 /////////////////////////////////////////////////////////////////////////////////////
-//ÇÁ·ÎÆÄÀÏ ¼ÂÆÃºÎ
+//í”„ë¡œíŒŒì¼ ì…‹íŒ…ë¶€
 /////////////////////////////////////////////////////////////////////////////////////
-bool ProfileStructher::Set_Profile (char *name, __int64 SetTime)
+bool ProfileStructher::Set_Profile (WCHAR *name, __int64 SetTime)
 {
 	int cnt;
+	if ( pThread == NULL )
+	{
+		for ( int TCnt = 0; TCnt < ThreadMax; TCnt++ )
+		{
+			if ( Thread[TCnt].flag == false )
+			{
+				//ì¸í„°ë½CompareExchangeë¡œ ë¹„êµ. falseì˜€ë‹¤ë©´ trueë¡œ ë°”ê¾¸ê³  ë‹¤ë¥¸ ìŠ¤ë ˆë“œì—ì„œ ë¨¼ì € ë³€ê²½í•´ì„œ trueì˜€ë‹¤ë©´ continueë¡œ ë‹¤ìŒ ë°°ì—´ ê²€ìƒ‰
+				if ( InterlockedCompareExchange (( volatile long * )&Thread[TCnt].flag, true, false) == true )
+				{
+					continue;
+				}
+				
+				//ìŠ¤ë ˆë“œ ì¹´ìš´íŠ¸ê°€ falseì˜€ì„ ê²½ìš° ì§„í–‰.
+				Thread[TCnt].ThreadID = GetCurrentThreadId ();
+				pThread = &Thread[TCnt];
+				break;
+
+			}
+		}
+	}
+
+
+	ProfileThread *p = ( ProfileThread * )pThread;
 	for ( cnt = 0; cnt < Max; cnt++ )
 	{
-		//¹è¿­À» µ¹¸é¼­ false¸¦ ¸¸³µ´Ù¸é ÇØ´ç ÇÁ·ÎÆÄÀÏÀÌ Á¸ÀçÇÏÁö ¾ÊÀ¸¹Ç·Î »õ·Î ¼ÂÆÃÇØ ÁÖ¾î¾ß µÈ´Ù.
-		if ( false == profile_Array[cnt].flag )
+		//ë°°ì—´ì„ ëŒë©´ì„œ falseë¥¼ ë§Œë‚¬ë‹¤ë©´ í•´ë‹¹ í”„ë¡œíŒŒì¼ì´ ì¡´ì¬í•˜ì§€ ì•Šìœ¼ë¯€ë¡œ ìƒˆë¡œ ì…‹íŒ…í•´ ì£¼ì–´ì•¼ ëœë‹¤.
+		if ( false == p->profile_Array[cnt].flag )
 		{
 			break;
 		}
-		//¹è¿­À» µ¹¸é¼­ °°Àº ÀÌ¸§ÀÇ ÇÁ·ÎÆÄÀÏ¸¦ ¸¸³ª°Ô µÇ¸éÀº ÇØ´ç ÇÁ·ÎÆÄÀÏÀÇ ½ÃÀÛ½Ã°£ÀÌ 0À¸·Î ÃÊ±âÈ­ µÇ¾îÀÖ´ÂÁö È®ÀÎ. 
-		else if ( 0 == strcmp (profile_Array[cnt].Name, name) )
+		//ë°°ì—´ì„ ëŒë©´ì„œ ê°™ì€ ì´ë¦„ì˜ í”„ë¡œíŒŒì¼ë¥¼ ë§Œë‚˜ê²Œ ë˜ë©´ì€ í•´ë‹¹ í”„ë¡œíŒŒì¼ì˜ ì‹œì‘ì‹œê°„ì´ 0ìœ¼ë¡œ ì´ˆê¸°í™” ë˜ì–´ìˆëŠ”ì§€ í™•ì¸. 
+		else if ( 0 == lstrcmpW (p->profile_Array[cnt].Name, name) )
 		{
-			//ÇØ´ç ÇÁ·ÎÆÄÀÏÀÇ beginflag°¡ true¶ó¸é Á¾·áµÇÁö ¾ÊÀº ÇÁ·ÎÆÄÀÏ ÀÌ¹Ç·Î false¸¦ ¸®ÅÏ
-			if ( true == profile_Array[cnt].Beginflag )
+			//í•´ë‹¹ í”„ë¡œíŒŒì¼ì˜ beginflagê°€ trueë¼ë©´ ì¢…ë£Œë˜ì§€ ì•Šì€ í”„ë¡œíŒŒì¼ ì´ë¯€ë¡œ falseë¥¼ ë¦¬í„´
+			if ( true == p->profile_Array[cnt].Beginflag )
 			{
 				return false;
 			}
@@ -26,86 +49,86 @@ bool ProfileStructher::Set_Profile (char *name, __int64 SetTime)
 		}
 	}
 
-	//¹è¿­À» ¿À¹öÇÏ¿© ÀúÀåÇÏÁö ¸øÇÑ°ÍÀº false·Î ¸®ÅÏ.
+	//ë°°ì—´ì„ ì˜¤ë²„í•˜ì—¬ ì €ì¥í•˜ì§€ ëª»í•œê²ƒì€ falseë¡œ ë¦¬í„´.
 	if ( cnt >= Max )
 	{
 		return false;
 	}
 	else
 	{
-		profile_Array[cnt].flag = true;
-		strcpy_s (profile_Array[cnt].Name,sizeof(profile_Array[cnt].Name), name);
-		profile_Array[cnt].Start_Time = SetTime;
-		profile_Array[cnt].Beginflag = true;
+		p->profile_Array[cnt].flag = true;
+		lstrcpynW (p->profile_Array[cnt].Name, name, sizeof (p->profile_Array[cnt].Name));
+		p->profile_Array[cnt].Start_Time = SetTime;
+		p->profile_Array[cnt].Beginflag = true;
 		return true;
 	}
 
 }
 
 /////////////////////////////////////////////////////////////////////////////////////
-//ÇÁ·ÎÆÄÀÏ Á¾·áºÎ
+//í”„ë¡œíŒŒì¼ ì¢…ë£Œë¶€
 ////////////////////////////////////////////////////////////////////////////////////
-bool ProfileStructher::End_Profile (char *name, __int64 EndTime)
+bool ProfileStructher::End_Profile (WCHAR *name, __int64 EndTime)
 {
 	int cnt;
 	__int64 Time;
-
+	ProfileThread *p = ( ProfileThread * )pThread;
 
 	for ( cnt = 0; cnt < Max; cnt++ )
 	{
-		//¹è¿­ÀÇ flag°¡ false¶ó¸é ÇØ´ç ÇÁ·ÎÆÄÀÏÀÌ Á¸ÀçÇÏÁö ¾Ê´Â°ÍÀÌ¹Ç·Î false¸¦ ¸®ÅÏÇÑ´Ù.
-		if ( false == profile_Array[cnt].flag )
+		//ë°°ì—´ì˜ flagê°€ falseë¼ë©´ í•´ë‹¹ í”„ë¡œíŒŒì¼ì´ ì¡´ì¬í•˜ì§€ ì•ŠëŠ”ê²ƒì´ë¯€ë¡œ falseë¥¼ ë¦¬í„´í•œë‹¤.
+		if ( false == p->profile_Array[cnt].flag )
 		{
 			return false;
 		}
-		//¹è¿­ÀÇ ÇØ´ç ÇÁ·ÎÆÄÀÏÀÌ Á¸ÀçÇÑ´Ù¸é Beginflag·Î ÇÁ·ÎÆÄÀÏÀÇ ½ÃÀÛ¿©ºÎ¸¦ È®ÀÎ.
-		else if ( 0 == strcmp (profile_Array[cnt].Name, name) )
+		//ë°°ì—´ì˜ í•´ë‹¹ í”„ë¡œíŒŒì¼ì´ ì¡´ì¬í•œë‹¤ë©´ Beginflagë¡œ í”„ë¡œíŒŒì¼ì˜ ì‹œì‘ì—¬ë¶€ë¥¼ í™•ì¸.
+		else if ( 0 == lstrcmpW (p->profile_Array[cnt].Name, name) )
 		{
-			//Beginflag°¡ true¶ó¸é ÇØ´ç ÇÁ·ÎÆÄÀÏÀÌ ½ÃÀÛµÇ¾îÀÖÀ¸¹Ç·Î Á¾·áÃ³¸® false¶ó¸é ½ÃÀÛµÇÁö ¾ÊÀº ÇÁ·ÎÆÄÀÏÀÌ¹Ç·Î false¸¦ ¸®ÅÏÇÑ´Ù.
-			if ( true == profile_Array[cnt].Beginflag )
+			//Beginflagê°€ trueë¼ë©´ í•´ë‹¹ í”„ë¡œíŒŒì¼ì´ ì‹œì‘ë˜ì–´ìˆìœ¼ë¯€ë¡œ ì¢…ë£Œì²˜ë¦¬ falseë¼ë©´ ì‹œì‘ë˜ì§€ ì•Šì€ í”„ë¡œíŒŒì¼ì´ë¯€ë¡œ falseë¥¼ ë¦¬í„´í•œë‹¤.
+			if ( true == p->profile_Array[cnt].Beginflag )
 			{
-				profile_Array[cnt].Beginflag = false;
-				profile_Array[cnt].CallCNT++;
-				Time = EndTime - profile_Array[cnt].Start_Time;
+				p->profile_Array[cnt].Beginflag = false;
+				p->profile_Array[cnt].CallCNT++;
+				Time = EndTime - p->profile_Array[cnt].Start_Time;
 
-				//ÃÖ´ë ½Ã°£°ªº¸´Ù Å¬ °æ¿ì ÃÖ´ë ½Ã°£°ª¿¡ ÀúÀåÇÏ°í ÇöÀç ÃÖ´ë ½Ã°£°ªÀº ½ÇÁú ÃÖ´ë ½Ã°£°ª¿¡ ÀúÀåÇÑ´Ù.
-				if ( Time > profile_Array[cnt].Max_Time[0] )
+				//ìµœëŒ€ ì‹œê°„ê°’ë³´ë‹¤ í´ ê²½ìš° ìµœëŒ€ ì‹œê°„ê°’ì— ì €ì¥í•˜ê³  í˜„ì¬ ìµœëŒ€ ì‹œê°„ê°’ì€ ì‹¤ì§ˆ ìµœëŒ€ ì‹œê°„ê°’ì— ì €ì¥í•œë‹¤.
+				if ( Time > p->profile_Array[cnt].Max_Time[0] )
 				{
-					profile_Array[cnt].Max_Time[1] = profile_Array[cnt].Max_Time[0];
-					profile_Array[cnt].Max_Time[0] = Time;
+					p->profile_Array[cnt].Max_Time[1] = p->profile_Array[cnt].Max_Time[0];
+					p->profile_Array[cnt].Max_Time[0] = Time;
 				}
-				//ÃÖ´ë ½Ã°£°ªº¸´Ù ÀÛ°í ½ÇÁú ÃÖ´ë ½Ã°£°ªº¸´Ù Å«°æ¿ì ½ÇÁú ÃÖ´ë ½Ã°£°ªÀº TotalTime¿¡ Æ÷ÇÔÇÏ°í ½ÇÁú ÃÖ´ë ½Ã°£°ª¿¡ ÀúÀåÇÑ´Ù.
-				else if ( Time > profile_Array[cnt].Max_Time[1] )
+				//ìµœëŒ€ ì‹œê°„ê°’ë³´ë‹¤ ì‘ê³  ì‹¤ì§ˆ ìµœëŒ€ ì‹œê°„ê°’ë³´ë‹¤ í°ê²½ìš° ì‹¤ì§ˆ ìµœëŒ€ ì‹œê°„ê°’ì€ TotalTimeì— í¬í•¨í•˜ê³  ì‹¤ì§ˆ ìµœëŒ€ ì‹œê°„ê°’ì— ì €ì¥í•œë‹¤.
+				else if ( Time > p->profile_Array[cnt].Max_Time[1] )
 				{
-					//Ã³À½ ÇÑ¹øÀº ÃÊ±âÈ­·Î ÀÎÇÑ º¯¼ö°¡ µé¾î°¡ ÀÖÀ¸¹Ç·Î ¹ö¸°´Ù.
-					if ( profile_Array[cnt].Max_Time[1] != 0 )
+					//ì²˜ìŒ í•œë²ˆì€ ì´ˆê¸°í™”ë¡œ ì¸í•œ ë³€ìˆ˜ê°€ ë“¤ì–´ê°€ ìˆìœ¼ë¯€ë¡œ ë²„ë¦°ë‹¤.
+					if ( p->profile_Array[cnt].Max_Time[1] != 0 )
 					{
-						profile_Array[cnt].TotalTime += profile_Array[cnt].Max_Time[1];
+						p->profile_Array[cnt].TotalTime += p->profile_Array[cnt].Max_Time[1];
 					}
-					profile_Array[cnt].Max_Time[1] = Time;
+					p->profile_Array[cnt].Max_Time[1] = Time;
 				}
 
-				if ( Time < profile_Array[cnt].Min_Time[0] )
+				if ( Time < p->profile_Array[cnt].Min_Time[0] )
 				{
-					profile_Array[cnt].Min_Time[1] = profile_Array[cnt].Min_Time[0];
-					profile_Array[cnt].Min_Time[0] = Time;
+					p->profile_Array[cnt].Min_Time[1] = p->profile_Array[cnt].Min_Time[0];
+					p->profile_Array[cnt].Min_Time[0] = Time;
 				}
 
-				else if ( Time < profile_Array[cnt].Min_Time[1] )
+				else if ( Time < p->profile_Array[cnt].Min_Time[1] )
 				{
-					//ÃÊ±âÈ­´Â ÀúÀå¾ÈÇÔ.
-					if ( profile_Array[cnt].Min_Time[1] != 0x7fffffffffffffff )
+					//ì´ˆê¸°í™”ëŠ” ì €ì¥ì•ˆí•¨.
+					if ( p->profile_Array[cnt].Min_Time[1] != 0x7fffffffffffffff )
 					{
-						profile_Array[cnt].TotalTime += profile_Array[cnt].Min_Time[1];
+						p->profile_Array[cnt].TotalTime += p->profile_Array[cnt].Min_Time[1];
 					}
-					profile_Array[cnt].Min_Time[1] = Time;
+					p->profile_Array[cnt].Min_Time[1] = Time;
 				}
 
 
-				//ÇöÀç ½Ã°£ÀÌ ÃÖ´ë°ªº¸´Ù ÀÛ°í ÃÖ¼Ò°ªº¸´Ù Å¬ °æ¿ì ÅäÅ»Å¸ÀÓ¿¡ ÇÕÄ§.
-				if ( Time > profile_Array[cnt].Min_Time[1] && Time < profile_Array[cnt].Max_Time[1] )
+				//í˜„ì¬ ì‹œê°„ì´ ìµœëŒ€ê°’ë³´ë‹¤ ì‘ê³  ìµœì†Œê°’ë³´ë‹¤ í´ ê²½ìš° í† íƒˆíƒ€ì„ì— í•©ì¹¨.
+				if ( Time > p->profile_Array[cnt].Min_Time[1] && Time < p->profile_Array[cnt].Max_Time[1] )
 				{
-					profile_Array[cnt].TotalTime += Time;
+					p->profile_Array[cnt].TotalTime += Time;
 				}
 
 				return true;
@@ -119,7 +142,7 @@ bool ProfileStructher::End_Profile (char *name, __int64 EndTime)
 }
 
 ///////////////////////////////////////////////////////////////////////////////////
-//ÇÁ·ÎÆÄÀÏ Ãâ·ÂºÎ
+//í”„ë¡œíŒŒì¼ ì¶œë ¥ë¶€
 ///////////////////////////////////////////////////////////////////////////////////
 void ProfileStructher::Print_Profile (void)
 {
@@ -131,48 +154,64 @@ void ProfileStructher::Print_Profile (void)
 	double MaxTime;
 
 
-	fopen_s (&fp,"Profile.txt","w+t");
+	_wfopen_s (&fp,L"Profile.txt",L"w+t,ccs=UNICODE");
 
+	fwprintf_s (fp, L"%-13s l %-17s l %-12s   l %-12s   l %-12s   l %-8s l\n", L"ThreadID", L"Name", L"Average", L"MinTime", L"MaxTime", L"TotalCaLL");
+	fwprintf_s (fp, L"ã…¡ã…¡ã…¡ã…¡ã…¡ã…¡ã…¡ã…¡ã…¡ã…¡ã…¡ã…¡ã…¡ã…¡ã…¡ã…¡ã…¡ã…¡ã…¡ã…¡ã…¡ã…¡ã…¡ã…¡ã…¡ã…¡ã…¡ã…¡ã…¡ã…¡ã…¡ã…¡ã…¡ã…¡ã…¡ã…¡ã…¡ã…¡ã…¡ã…¡ã…¡ã…¡ã…¡ã…¡ã…¡ã…¡ã…¡ã…¡ã…¡\n");
 
-	fprintf_s (fp, "l %-17s l %-11s   l %-11s   l %-11s   l %-8s l\n", "Name", "Average", "MinTime", "MaxTime", "TotalCaLL");
-	fprintf_s (fp,"¤Ñ¤Ñ¤Ñ¤Ñ¤Ñ¤Ñ¤Ñ¤Ñ¤Ñ¤Ñ¤Ñ¤Ñ¤Ñ¤Ñ¤Ñ¤Ñ¤Ñ¤Ñ¤Ñ¤Ñ¤Ñ¤Ñ¤Ñ¤Ñ¤Ñ¤Ñ¤Ñ¤Ñ¤Ñ¤Ñ¤Ñ¤Ñ¤Ñ¤Ñ¤Ñ¤Ñ¤Ñ¤Ñ¤Ñ¤Ñ¤Ñ\n");
-
-	for ( cnt = 0; cnt < Max; cnt++ )
+	for ( int TCnt = 0; TCnt < ThreadMax; TCnt++ )
 	{
-		if ( profile_Array[cnt].CallCNT >= 1 )
+		//ì“°ë ˆë“œì—ì„œ ë½‘ì•„ê°€ëŠ” ìˆœì„œëŠ” ë§¨ ì• ë°°ì—´ë¶€í„° ìˆœì„œëŒ€ë¡œ ì´ë¯€ë¡œ flagê°€ falseì¸ ê²½ìš°ëŠ” ê·¸ ë’¤ë¡œ ë¹ˆë°°ì—´ì´ë¯€ë¡œ ë¹ ì ¸ ë‚˜ì˜¨ë‹¤.
+		if ( Thread[TCnt].flag == false )
 		{
-			profile_Array[cnt].TotalTime += profile_Array[cnt].Min_Time[1];
-			profile_Array[cnt].TotalTime += profile_Array[cnt].Max_Time[1];
+			break;
+		}
+		for ( cnt = 0; cnt < Max; cnt++ )
+		{
+			if ( Thread[TCnt].profile_Array[cnt].CallCNT >= 1 )
+			{
+				Thread[TCnt].profile_Array[cnt].TotalTime += Thread[TCnt].profile_Array[cnt].Min_Time[1];
+				Thread[TCnt].profile_Array[cnt].TotalTime += Thread[TCnt].profile_Array[cnt].Max_Time[1];
 
-			i_Average = profile_Array[cnt].TotalTime / profile_Array[cnt].CallCNT;
-			Average = (double) i_Average / MicroSecond;
-			MinTime = (double) profile_Array[cnt].Min_Time[1] / MicroSecond;
-			MaxTime = (double) profile_Array[cnt].Max_Time[1] / MicroSecond;
+				i_Average = Thread[TCnt].profile_Array[cnt].TotalTime / Thread[TCnt].profile_Array[cnt].CallCNT;
+				Average = ( double )i_Average / MicroSecond;
+				MinTime = ( double )Thread[TCnt].profile_Array[cnt].Min_Time[1] / MicroSecond;
+				MaxTime = ( double )Thread[TCnt].profile_Array[cnt].Max_Time[1] / MicroSecond;
 
-			fprintf_s (fp, "l %-17s l %-11.4fms l %-11.4fms l %-11.4fms l %8lld  l\n", profile_Array[cnt].Name, Average, MinTime, MaxTime, profile_Array[cnt].CallCNT);
+				fwprintf_s (fp, L" %-12d l %-17ls l %-11.4fÂµs l %-11.4fÂµs l %-11.4fÂµs l %8lld  l\n", Thread[TCnt].ThreadID,Thread[TCnt].profile_Array[cnt].Name, Average, MinTime, MaxTime, Thread[TCnt].profile_Array[cnt].CallCNT);
+			}
 		}
 	}
+
 	fclose (fp);
 }
-void ProfileStructher::ClearProfile (void)		//¸ğµç ÇÁ·ÎÆÄÀÏÀ» ÃÊ±âÈ­ ½ÃÄÑ¹ö¸°´Ù.
+void ProfileStructher::ClearProfile (void)		//ëª¨ë“  í”„ë¡œíŒŒì¼ì„ ì´ˆê¸°í™” ì‹œì¼œë²„ë¦°ë‹¤.
 {
 	int cnt;
-	for ( cnt = 0; cnt < Max; cnt++ )
+	for ( int TCnt = 0; TCnt < ThreadMax; TCnt++ )
 	{
-		profile_Array[cnt].flag = false;
-		profile_Array[cnt].Name[0] = NULL;
-		profile_Array[cnt].TotalTime = 0;
-		profile_Array[cnt].Min_Time[0] = 0x7fffffffffffffff;		//ÃÖ¼Ò °É¸° ½Ã°£ÀÌ¹Ç·Î ÃÖ´ë°ªÀ¸·Î ¹Ğ¾îÁØ´Ù.
-		profile_Array[cnt].Min_Time[1] = 0x7fffffffffffffff;
-		profile_Array[cnt].Max_Time[0] = 0;		//ÃÖ´ë °É¸° ½Ã°£ÀÌ¹Ç·Î ÃÖ¼Ò°ªÀ¸·Î ¹Ğ¾îÁØ´Ù.
-		profile_Array[cnt].Max_Time[1] = 0;
-		profile_Array[cnt].CallCNT = 0;		//È£ÃâÈ½¼ö ÃÊ±âÈ­
+		//ì“°ë ˆë“œì—ì„œ ë½‘ì•„ê°€ëŠ” ìˆœì„œëŠ” ë§¨ ì• ë°°ì—´ë¶€í„° ìˆœì„œëŒ€ë¡œ ì´ë¯€ë¡œ flagê°€ falseì¸ ê²½ìš°ëŠ” ê·¸ ë’¤ë¡œ ë¹ˆë°°ì—´ì´ë¯€ë¡œ ë¹ ì ¸ ë‚˜ì˜¨ë‹¤.
+		if ( Thread[TCnt].flag == false )
+		{
+			break;
+		}
+		for ( cnt = 0; cnt < Max; cnt++ )
+		{
+			Thread[TCnt].profile_Array[cnt].flag = false;
+			Thread[TCnt].profile_Array[cnt].Name[0] = NULL;
+			Thread[TCnt].profile_Array[cnt].TotalTime = 0;
+			Thread[TCnt].profile_Array[cnt].Min_Time[0] = 0x7fffffffffffffff;		//ìµœì†Œ ê±¸ë¦° ì‹œê°„ì´ë¯€ë¡œ ìµœëŒ€ê°’ìœ¼ë¡œ ë°€ì–´ì¤€ë‹¤.
+			Thread[TCnt].profile_Array[cnt].Min_Time[1] = 0x7fffffffffffffff;
+			Thread[TCnt].profile_Array[cnt].Max_Time[0] = 0;		//ìµœëŒ€ ê±¸ë¦° ì‹œê°„ì´ë¯€ë¡œ ìµœì†Œê°’ìœ¼ë¡œ ë°€ì–´ì¤€ë‹¤.
+			Thread[TCnt].profile_Array[cnt].Max_Time[1] = 0;
+			Thread[TCnt].profile_Array[cnt].CallCNT = 0;		//í˜¸ì¶œíšŸìˆ˜ ì´ˆê¸°í™”
+		}
 	}
 }
 
 ProfileStructher Profile;
 
-void Profile_Begin (char *name)
+void Profile_Begin (WCHAR *name)
 {
 	LARGE_INTEGER StartTime;
 	QueryPerformanceCounter (&StartTime);
@@ -183,7 +222,7 @@ void Profile_Begin (char *name)
 	return;
 }
 
-void Profile_End (char *name)
+void Profile_End (WCHAR *name)
 {
 	LARGE_INTEGER EndTime;
 	QueryPerformanceCounter (&EndTime);
@@ -194,13 +233,14 @@ void Profile_End (char *name)
 	return;
 }
 
-void Profile_Print (void)
+void PROFILE_KeyProc (void)
 {
-
+	//p
 	if ( GetAsyncKeyState (0x50) & 0x8001 )
 	{
 		Profile.Print_Profile ();
 	}
+	//o
 	if ( GetAsyncKeyState (0x4f) & 0x8001 )
 	{
 		Profile.ClearProfile ();

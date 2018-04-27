@@ -180,6 +180,8 @@ void ProfileStructher::Print_Profile (void)
 
 				fwprintf_s (fp, L" %-12d l %-17ls l %-11.4fµs l %-11.4fµs l %-11.4fµs l %8lld  l\n", Thread[TCnt].ThreadID,Thread[TCnt].profile_Array[cnt].Name, Average, MinTime, MaxTime, Thread[TCnt].profile_Array[cnt].CallCNT);
 			}
+
+			fwprintf_s (fp, L" ======================================================================\n");
 		}
 	}
 

@@ -32,7 +32,6 @@ private:
 	};
 	ProfileThread Thread[ThreadMax];
 
-//	Profile profile_Array[Max];
 	LARGE_INTEGER SecondFrequency;
 	double MicroSecond;
 
